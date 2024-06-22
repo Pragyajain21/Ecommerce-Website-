@@ -1,0 +1,78 @@
+datasource db {
+    provider = "mongodb"
+    url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+model Account {
+    id                String  @id @default(auto()) @map("_id") @db.ObjectId
+    userId            String  @db.ObjectId
+    type              String
+    provider          String
+    providerAccountId String
+    refresh_token     String? @db.String
+    access_token      String? @db.String
+    expires_at        Int?
+    token_type        String?
+    scope             String?
+    id_token          String? @db.String
+    session_state     String?
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([provider, providerAccountId])
+}
+
+model User {
+    id             String    @id @default(auto()) @map("_id") @db.ObjectId
+    name           String?
+    email          String?   @unique
+    emailVerified  DateTime?
+    image          String?
+    hashedPassword String?
+    createdAt      DateTime  @default(now())
+    updatedAt      DateTime  @updatedAt
+    role           Role      @default(USER)
+
+    accounts Account[]
+    reviews  Review[]
+}
+
+model Product {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    name        String
+    description String
+
+    category String
+    inStock  Boolean
+    images   Image[]
+    brand    String
+
+    price   Float
+    reviews Review[]
+}
+
+model Review {
+    id          String   @id @default(auto()) @map("_id") @db.ObjectId
+    userId      String   @db.ObjectId
+    ProductId   String   @db.ObjectId
+    rating      Int
+    comment     String
+    createdDate DateTime @default(now())
+    product     Product  @relation(fields: [ProductId], references: [id])
+    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+type Image {
+    color     String
+    colorCode String
+    Image     String
+}
+
+enum Role {
+    USER
+    ADMIN
+}
